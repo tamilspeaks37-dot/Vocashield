@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VocaShield — Don't Trust the Voice. Verify the Request.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:#1B1730; --slate:#241E42; --paper:#FAF6EE; --paper2:#F1E9D8;
+  --line:#E3D8BE; --line-dark:#352C5C; --signal:#5B3DF5; --signal-deep:#2E1E8C;
+  --signal-soft:#EDE8FE; --amber:#C1741F; --amber-soft:#F6E6CC;
+  --rust:#D2481F; --rust-soft:#F9DFCF; --crimson:#A11743; --crimson-soft:#F6DCE6;
+  --muted:#6E6584; --gold:#B8842E; --pop:#12B5A6; --pop-soft:#DBF5F1;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body { margin:0; font-family: "Space Grotesk", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--paper); color: var(--ink); -webkit-font-smoothing: antialiased; }
+.font-display { font-family: "Fraunces", Georgia, "Times New Roman", serif; letter-spacing: -0.015em; font-optical-sizing: auto; }
+.font-mono { font-family: "IBM Plex Mono", "SF Mono", Consolas, Menlo, monospace; }
+a { color: inherit; }
+button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+input, select, textarea { font-family: inherit; }
+::selection { background: var(--signal); color: #fff; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+.wrap-app { max-width: 1440px; margin: 0 auto; }
+
+/* buttons */
+.btn { display:inline-flex; align-items:center; gap:8px; padding:13px 22px; border-radius:3px; font-weight:600; font-size:14.5px; font-family:"Space Grotesk",sans-serif; border:1.5px solid transparent; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+.btn-dark { background: var(--ink); color:#fff; }
+.btn-dark:hover { transform: translateY(-2px); box-shadow: 4px 6px 0 0 var(--signal); }
+.btn-signal { background: var(--signal); color:#fff; }
+.btn-signal:hover { transform: translateY(-2px); box-shadow: 4px 6px 0 0 var(--ink); }
+.btn-outline { background:transparent; border-color: var(--ink); color: var(--ink); }
+.btn-outline:hover { background: var(--ink); color: #fff; }
+.btn:disabled { opacity:.4; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+.btn-sm { padding:8px 14px; font-size:13px; border-radius:3px; }
+
+/* cards */
+.card { background:#fff; border:1.5px solid var(--line); border-radius:4px; border-top:3px solid var(--ink); padding:24px; box-shadow: 3px 3px 0 0 rgba(27,23,48,.05); transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+.card-hover:hover { box-shadow: 5px 5px 0 0 var(--signal-soft); transform: translate(-1px,-1px); border-top-color: var(--signal); }
+
+/* tags */
+.tag { display:inline-flex; align-items:center; gap:6px; border-radius:2px; padding:4px 11px; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-family:"IBM Plex Mono",monospace; }
+.tag .dot { width:6px; height:6px; border-radius:999px; background:currentColor; }
+.tag-REAL { background: var(--signal-soft); color: var(--signal-deep); }
+.tag-DEMO { background: var(--pop-soft); color: #0D7A70; }
+.tag-EXPERIMENTAL { background: var(--rust-soft); color: var(--rust); }
+.tag-FUTURE { background: #EDEAF7; color:#4A4166; }
+.tag .sub { font-weight:400; text-transform:none; opacity:.7; font-family:"Space Grotesk",sans-serif; letter-spacing:0; }
+
+/* risk badge */
+.risk { display:inline-flex; align-items:center; gap:8px; border-radius:2px; padding:7px 13px; font-weight:700; font-size:14px; font-family:"IBM Plex Mono",monospace; }
+.risk-lg { padding:11px 20px; font-size:17px; }
+.risk .n { font-weight:400; opacity:.6; }
+
+/* layout */
+.grid { display:grid; gap:14px; }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.g4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 980px) { .g4 { grid-template-columns: repeat(2, 1fr); } .g3 { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 600px) { .g4, .g2, .g3 { grid-template-columns: 1fr; } }
+.hero-grid { display:grid; grid-template-columns: 1.05fr .95fr; gap:56px; align-items:center; }
+@media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } }
+.two-col { display:grid; grid-template-columns: 1fr 1fr; gap:24px; }
+@media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+.analyze-grid { display:grid; grid-template-columns: 1.3fr 1fr; gap:24px; }
+@media (max-width: 940px) { .analyze-grid { grid-template-columns: 1fr; } }
+.overview-grid { display:grid; grid-template-columns: 1.4fr 1fr; gap:20px; }
+@media (max-width: 940px) { .overview-grid { grid-template-columns: 1fr; } }
+
+/* nav */
+.topbar { position:sticky; top:0; z-index:40; border-bottom:1.5px solid var(--ink); background:rgba(250,246,238,.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.topbar-inner { max-width:1440px; margin:0 auto; padding:0 18px; height:64px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.hamburger { width:40px; height:40px; border-radius:3px; border:1.5px solid var(--ink); background:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.hamburger:hover { background: var(--ink); }
+.hamburger:hover .bars span { background:#fff; }
+.hamburger .bars { display:flex; flex-direction:column; gap:4px; }
+.hamburger .bars span { width:17px; height:2px; background: var(--ink); border-radius:1px; display:block; transition: background .15s; }
+.logo { display:flex; align-items:center; gap:9px; background:none; border:none; }
+.logo-badge { width:31px; height:31px; border-radius:3px; background: var(--signal); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:15px; transform: rotate(-4deg); box-shadow: 3px 3px 0 0 var(--ink); }
+.mode-toggle { display:flex; gap:2px; background:var(--paper2); border:1.5px solid var(--ink); border-radius:3px; padding:3px; }
+.mode-toggle button { background:transparent; border:none; padding:7px 13px; border-radius:2px; font-size:12px; font-weight:600; color:var(--muted); text-transform:capitalize; font-family:"IBM Plex Mono",monospace; }
+.mode-toggle button.active { background:var(--ink); color:#fff; }
+
+.app-body { display:flex; }
+.sidenav { width:226px; flex-shrink:0; border-right:1.5px solid var(--ink); padding:26px 13px; display:flex; flex-direction:column; gap:3px; }
+.sidenav button { display:flex; align-items:center; gap:10px; text-align:left; background:none; border:none; border-left:3px solid transparent; padding:10px 13px; border-radius:0; font-size:13.5px; font-weight:500; color:var(--ink); }
+.sidenav button.active { background:var(--signal-soft); border-left:3px solid var(--signal); color:var(--signal-deep); font-weight:700; }
+.sidenav-note { margin-top:auto; padding-top:20px; font-size:11.5px; color:var(--muted); line-height:1.55; }
+@media (max-width: 820px) { .sidenav { display:none; } }
+.mobilenav { display:none; overflow-x:auto; white-space:nowrap; gap:6px; padding:10px 14px; border-bottom:1.5px solid var(--ink); background:#fff; }
+.mobilenav button { display:inline-flex; align-items:center; gap:6px; background:var(--paper2); border:1.5px solid transparent; padding:8px 13px; border-radius:3px; font-size:12px; font-weight:600; color:var(--muted); }
+.mobilenav button.active { background:var(--signal-soft); border-color:var(--signal); color:var(--signal-deep); }
+@media (max-width: 820px) { .mobilenav { display:flex; } }
+.main { flex:1; min-width:0; padding:30px 22px 60px; }
+@media (max-width: 820px) { .main { padding:22px 16px 50px; } }
+
+.eyebrow { font-size:11.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--signal); font-family:"IBM Plex Mono",monospace; }
+.h1 { font-family:"Fraunces",Georgia,serif; font-size:34px; line-height:1.12; font-weight:600; margin:11px 0; letter-spacing:-.02em; }
+.muted { color:var(--muted); }
+.small { font-size:13px; }
+
+/* chain */
+.chain-step { display:flex; gap:16px; }
+.chain-dot { width:36px; height:36px; border-radius:3px; background:var(--paper2); color:var(--muted); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:14px; font-family:"IBM Plex Mono",monospace; font-weight:600; transition: all .5s; transform: rotate(-3deg); }
+.chain-dot.on { background: var(--signal); color:#fff; box-shadow: 2px 2px 0 0 var(--ink); }
+.chain-line { width:1.5px; flex:1; background:var(--line); margin:2px 0; min-height:20px; }
+
+/* form elements */
+.field { width:100%; border:1.5px solid var(--ink); border-radius:3px; padding:12px 14px; font-size:14px; background:#fff; font-family:"Space Grotesk",sans-serif; }
+.field:focus { outline:2px solid var(--signal); border-color:transparent; }
+label.lbl { font-size:13px; font-weight:700; display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:.04em; font-family:"IBM Plex Mono",monospace; }
+.choice-row { display:flex; gap:8px; flex-wrap:wrap; }
+.choice-btn { padding:10px 16px; border-radius:3px; border:1.5px solid var(--line); background:#fff; font-size:14px; font-family:"Space Grotesk",sans-serif; }
+.choice-btn.sel { border-color:var(--signal); background:var(--signal-soft); box-shadow: 2px 2px 0 0 var(--signal); }
+
+/* incident row */
+.inc-row { width:100%; text-align:left; border:1.5px solid var(--line); border-left:4px solid var(--line); border-radius:3px; padding:16px; background:#fff; display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:10px; transition: all .2s; }
+.inc-row:hover { border-left-color: var(--signal); transform: translateX(2px); }
+
+/* progress bar */
+.bar { height:8px; border-radius:2px; background:var(--paper2); border:1px solid var(--line); overflow:hidden; margin-top:14px; }
+.bar-fill { height:100%; border-radius:0; transition: width .5s; }
+
+.hidden { display:none !important; }
+
+/* drawer */
+.drawer-overlay { position:fixed; inset:0; background:rgba(13,17,22,.5); z-index:90; opacity:0; pointer-events:none; transition: opacity .25s ease; }
+.drawer-overlay.open { opacity:1; pointer-events:auto; }
+.drawer { position:fixed; top:0; left:0; bottom:0; width:340px; max-width:86vw; background:var(--paper); z-index:91; border-right:1.5px solid var(--ink); transform: translateX(-100%); transition: transform .28s cubic-bezier(.2,.9,.3,1); overflow-y:auto; }
+.drawer.open { transform: translateX(0); }
+.drawer-head { display:flex; align-items:center; justify-content:space-between; padding:20px; border-bottom:1.5px solid var(--ink); position:sticky; top:0; background:var(--paper); z-index:2; }
+.drawer-body { padding:16px 20px 30px; }
+.feature-item { padding:14px 0; border-bottom:1px solid var(--line); }
+.feature-item:last-child { border-bottom:none; }
+.feature-item .ftitle { font-size:14px; font-weight:700; margin-bottom:5px; font-family:"Fraunces",Georgia,serif; }
+.feature-item .fdesc { font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:8px; }
+
+/* hero backdrop */
+.hero-backdrop { position:absolute; inset:0; overflow:hidden; z-index:0; pointer-events:none; }
+.hero-blob { position:absolute; border-radius:50%; filter: blur(80px); opacity:.3; }
+
+/* stat card */
+.stat-card { border:1.5px solid var(--line); border-radius:4px; padding:18px; background:#fff; border-bottom:3px solid var(--ink); }
+.stat-num { font-family: "Fraunces", Georgia, serif; font-size:27px; font-weight:600; color:var(--ink); }
+.stat-label { font-size:12.5px; color:var(--muted); margin-top:4px; }
+.stat-trend { font-size:11.5px; font-weight:700; margin-top:8px; display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:2px; }
+
+/* waveform */
+.wave-box { background: var(--ink); border-radius:4px; padding:20px; display:flex; align-items:center; justify-content:center; gap:3px; height:90px; overflow:hidden; }
+.wave-bar { width:3px; border-radius:1px; background: var(--pop); transition: height .3s ease, background .3s ease; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ===================== DATA / STATE ===================== */
+const state = {
+  screen: "landing",
+  active: "overview",
+  mode: "standard",
+  drawerOpen: false,
+  contacts: [
+    { id: 1, name: "Mother — Lakshmi", relation: "Family", channel: "Phone", hasSecret: true },
+    { id: 2, name: "Team Lead — Arjun Rao", relation: "Organization", channel: "WhatsApp", hasSecret: false },
+  ],
+  secret: "",
+  showSecret: false,
+  voiceProfiles: [ { id: 1, name: "Dad's verified sample", relation: "Family", createdAt: "Aug 12" } ],
+  incidents: [
+    { id: "INC-1042", date: "Aug 24", risk: 82, category: "Executive impersonation", evidence: "Voice match uncertain, urgent wire-transfer request, unfamiliar channel", outcome: "Blocked by user — verified independently", demo: true },
+    { id: "INC-1039", date: "Aug 19", risk: 41, category: "OTP fishing attempt", evidence: "Caller requested OTP after claiming to be bank support", outcome: "User declined to share OTP", demo: true },
+    { id: "INC-1031", date: "Aug 11", risk: 65, category: "Family emergency scam", evidence: "Urgent bail-money request, unfamiliar number, high emotional pressure", outcome: "Verified via Trust Circle — call was fraudulent", demo: true },
+    { id: "INC-1022", date: "Aug 3", risk: 18, category: "Routine check-in", evidence: "Voice and channel matched known contact, no sensitive request", outcome: "No action needed", demo: true },
+  ],
+  selectedIncident: null,
+  lastAssessment: null,
+  incFilter: "All",
+  analyze: { scenario: null, revealed: 0, done: false },
+  verify: { who: "", action: "", urgent: null, verifiable: null, result: null },
+  vault: { name: "", relation: "Family", fileName: null, matchResult: null, checking: false },
+  trustCheck: { input: "", result: null },
+  seText: "",
+  complaint: { notes: "", exported: false },
+  vacc: { stage: "idle" }, // idle | vaccinating | done
+};
+
+/* ===================== HELPERS ===================== */
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+
+const RISK_LEVELS = [
+  { key:"LOW", min:0, max:24, color:"var(--signal)", soft:"var(--signal-soft)", glyph:"✓" },
+  { key:"GUARDED", min:25, max:49, color:"var(--amber)", soft:"var(--amber-soft)", glyph:"?" },
+  { key:"HIGH", min:50, max:74, color:"var(--rust)", soft:"var(--rust-soft)", glyph:"!" },
+  { key:"CRITICAL", min:75, max:100, color:"var(--crimson)", soft:"var(--crimson-soft)", glyph:"!!" },
+];
+function riskFor(score) { return RISK_LEVELS.find(r => score >= r.min && score <= r.max) || RISK_LEVELS[0]; }
+function riskBadge(score, size) {
+  const r = riskFor(score);
+  return `<span class="risk ${size==='lg'?'risk-lg':''}" style="background:${r.soft};color:${r.color}">${r.glyph} ${r.key} <span class="n">· ${score}/100</span></span>`;
+}
+function tag(kind) {
+  const map = { REAL:"Fully interactive", DEMO:"Illustrative reference", EXPERIMENTAL:"Experimental research", FUTURE:"On the roadmap" };
+  const label = { REAL:"LIVE", DEMO:"SAMPLE", EXPERIMENTAL:"EXPERIMENTAL", FUTURE:"ROADMAP" };
+  return `<span class="tag tag-${kind}"><span class="dot"></span>${label[kind]} <span class="sub">· ${map[kind]}</span></span>`;
+}
+
+const SE_PATTERNS = {
+  urgency: ["right now","immediately","before it's too late","urgent","don't hang up","act now","quickly","asap","within minutes","time is running out"],
+  secrecy: ["don't tell","keep this between","don't call anyone","don't mention this","confidential","just between us","no one else needs to know"],
+  authority: ["this is your bank","police","income tax","rbi","cbi","your manager","ceo","government","officer","customs","court"],
+  extraction: ["otp","one time password","pin","cvv","account number","password","aadhaar","date of birth","card number","verification code"],
+  financial: ["transfer","send money","gift card","wire","upi","pay now","deposit","bank details","refund"],
+};
+function scoreTranscript(text) {
+  const lower = text.toLowerCase();
+  const hits = {}; let total = 0;
+  Object.entries(SE_PATTERNS).forEach(([cat, phrases]) => {
+    const found = phrases.filter(p => lower.includes(p));
+    hits[cat] = found; total += found.length;
+  });
+  const extractIdx = Math.min(...SE_PATTERNS.extraction.map(p => lower.includes(p) ? lower.indexOf(p) : Infinity));
+  const authIdx = Math.min(...SE_PATTERNS.authority.map(p => lower.includes(p) ? lower.indexOf(p) : Infinity), ...SE_PATTERNS.urgency.map(p => lower.includes(p) ? lower.indexOf(p) : Infinity));
+  const sequencingFlag = isFinite(extractIdx) && isFinite(authIdx) && extractIdx > authIdx;
+  let score = Math.min(100, total * 11 + (sequencingFlag ? 18 : 0));
+  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+  const insufficient = wordCount < 6;
+  return { hits, total, score: insufficient ? 0 : score, sequencingFlag, insufficient };
+}
+
+const SCENARIOS = {
+  A: { title:"Scenario A — Trusted voice, ordinary request", base:30, steps:[
+    {label:"Voice", detail:"Speaker sample closely matches registered voice profile", weight:-20},
+    {label:"Request", detail:"Asking about weekend plans — no sensitive action", weight:-25},
+    {label:"Trust", detail:"Contact exists in Trust Circle, verified channel", weight:-20},
+    {label:"History", detail:"No prior incidents from this contact", weight:-10},
+  ]},
+  B: { title:"Scenario B — Convincing voice, urgent money request", base:20, steps:[
+    {label:"Voice", detail:"Voice sounds highly convincing but sample is short and compressed", weight:15},
+    {label:"Request", detail:"Urgent wire transfer requested, time pressure applied", weight:30},
+    {label:"Behavior", detail:"Isolation language detected: “don't tell anyone yet”", weight:22},
+    {label:"Channel", detail:"Call arrived via an unfamiliar VoIP number", weight:15},
+  ]},
+  C: { title:"Scenario C — Conflicting evidence", base:35, steps:[
+    {label:"Voice", detail:"Voice matches registered profile with high confidence", weight:-15},
+    {label:"Channel", detail:"Call routed through an unrecognized international relay", weight:25},
+    {label:"Request", detail:"Asking to approve a document access change", weight:18},
+    {label:"History", detail:"No previous contact from this number", weight:12},
+  ]},
+  D: { title:"Scenario D — Escalating information requests", base:15, steps:[
+    {label:"Sequence", detail:"Name confirmed → employee ID requested → account number requested", weight:28},
+    {label:"Sequence", detail:"OTP requested immediately after account number", weight:30},
+    {label:"Behavior", detail:"Authority claim: “this is IT security”", weight:14},
+    {label:"Behavior", detail:"Refuses independent callback verification", weight:18},
+  ]},
+};
+const SENSITIVE_ACTIONS = ["Transfer money","Share an OTP","Share a password","Share credentials","Disclose confidential data","Approve access change","Send documents","None of these"];
+
+const NAV_ITEMS = [
+  {key:"overview", label:"Overview", glyph:"◆"},
+  {key:"analyze", label:"Analyze", glyph:"◎"},
+  {key:"verify", label:"Verify Request", glyph:"?"},
+  {key:"trust", label:"Trust Circle", glyph:"◈"},
+  {key:"vault", label:"Voice Vault", glyph:"●"},
+  {key:"vaccination", label:"Voice Vaccination", glyph:"✚"},
+  {key:"incidents", label:"Incidents", glyph:"⚠"},
+  {key:"complaint", label:"Complaint Draft", glyph:"▤"},
+];
+
+const ALL_FEATURES = [
+  ["Overview Dashboard","A live snapshot of your protection status, risk trends, and recent activity at a glance."],
+  ["Multi-Signal Risk Engine","Combines voice, request type, trust relationship, and history into one explained risk assessment instead of a single opaque score."],
+  ["Explainable Risk Dashboard","Every result separates Risk from Confidence and shows supporting vs. contradictory evidence — never a black-box number."],
+  ["Trust Circle & Shared Secrets","A passphrase known only within your family or team, so a call can be verified even if the voice is a perfect clone."],
+  ["Social-Engineering Detection","Scans conversation text in real time for urgency, secrecy, authority, and information-extraction patterns."],
+  ["Verify-the-Request Workflow","Walks through who's calling, what they want, and how sensitive it is — recommending a concrete next step."],
+  ["Trusted Voice Vault","Register a known voice sample and compare future calls against it."],
+  ["Voice Vaccination","An experimental protective layer that can be applied to a voice sample before it's shared publicly."],
+  ["Incident & Threat History","Every assessment is logged automatically, filterable by risk level, building a private record over time."],
+  ["Auto-Drafted Complaint","Generates a ready-to-review report from any incident — nothing is ever submitted without your confirmation."],
+  ["Simple / Standard / Analyst Modes","The same data, shown at the right depth for anyone from a first-time user to a security analyst."],
+];
+
+/* ===================== RENDER ROOT ===================== */
+function render() {
+  const root = document.getElementById("app");
+  root.innerHTML = (state.screen === "landing" ? renderLanding() : renderDashboard()) + renderDrawer();
+  attachHandlers();
+}
+
+/* ===================== DRAWER (hamburger feature menu) ===================== */
+function renderDrawer() {
+  return `
+    <div class="drawer-overlay ${state.drawerOpen?'open':''}" data-action="closeDrawer"></div>
+    <div class="drawer ${state.drawerOpen?'open':''}">
+      <div class="drawer-head">
+        <div class="logo"><div class="logo-badge">◈</div><span class="font-display" style="font-weight:600;font-size:17px">VocaShield</span></div>
+        <button data-action="closeDrawer" style="background:none;border:none;font-size:20px;color:var(--muted);padding:4px 8px">✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="eyebrow" style="margin-bottom:14px">Everything inside</div>
+        ${ALL_FEATURES.map(([t,d]) => `
+          <div class="feature-item">
+            <div class="ftitle">${t}</div>
+            <div class="fdesc">${d}</div>
+          </div>`).join("")}
+        <button class="btn btn-dark" style="width:100%;justify-content:center;margin-top:18px" data-action="drawerEnter">${state.screen==='landing' ? 'Open Dashboard' : 'Go to Overview'}</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== SVG CHART HELPERS ===================== */
+function lineChart(data, w, h, color) {
+  const max = Math.max(...data), min = Math.min(...data);
+  const range = (max - min) || 1;
+  const stepX = w / (data.length - 1);
+  const pts = data.map((v,i) => [i*stepX, h - ((v-min)/range) * (h-10) - 5]);
+  const line = pts.map(p=>p.join(",")).join(" ");
+  const area = `0,${h} ` + line + ` ${w},${h}`;
+  const gradId = "grad" + Math.random().toString(36).slice(2,8);
+  return `
+    <svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="overflow:visible">
+      <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.28"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient></defs>
+      <polygon points="${area}" fill="url(#${gradId})" />
+      <polyline points="${line}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${color}" />`).join("")}
+    </svg>`;
+}
+function donutChart(segments, size) {
+  const total = segments.reduce((s,x)=>s+x[1],0) || 1;
+  let acc = 0;
+  const r = size/2 - 12, c = size/2, circ = 2*Math.PI*r;
+  const arcs = segments.map(([label,val,color]) => {
+    const frac = val/total;
+    const dash = frac*circ;
+    const el = `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="16" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${c} ${c})" stroke-linecap="butt"/>`;
+    acc += dash;
+    return el;
+  }).join("");
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${arcs}<circle cx="${c}" cy="${c}" r="${r-18}" fill="#fff"/></svg>`;
+}
+
+/* ===================== LANDING ===================== */
+function renderLanding() {
+  const chainSteps = [
+    ["Voice","Is the audio itself consistent with a genuine speaker?"],
+    ["Request","What is actually being asked for?"],
+    ["Context","Channel, timing, and situation around the call"],
+    ["Trust","Known relationship, shared secrets, history"],
+    ["Risk","Signals combined, weighed, and explained"],
+    ["Verification","A confirmed, human decision — never automatic"],
+  ];
+  const stats = [
+    ["1,210%","Rise in AI-driven fraud attempts, 2025","Industry fraud reporting, 2025"],
+    ["83%","Of voice-scam victims who lost money","Consumer survey data, 2025"],
+    ["3 sec.","Of audio sufficient to produce a working clone","Published cloning research"],
+    ["60–75%","Real-world detector accuracy on live, compressed calls","Independent tool testing, 2026"],
+  ];
+  const caps = [
+    ["Multi-Signal Risk Engine","DEMO"],["Explainable Risk Dashboard","REAL"],
+    ["Trust Circle & shared secrets","REAL"],["Social-engineering detection","REAL"],
+    ["Verify-the-Request workflow","REAL"],["Trusted Voice Vault","DEMO"],
+    ["Voice Vaccination","EXPERIMENTAL"],["Incident history","REAL"],
+    ["Auto-drafted complaint","REAL"],["Simple / Analyst modes","REAL"],
+  ];
+  return `
+    <header style="border-bottom:1px solid var(--line);position:relative;z-index:2">
+      <div class="wrap" style="height:74px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="hamburger" data-action="openDrawer"><span class="bars"><span></span><span></span><span></span></span></button>
+          <div class="logo"><div class="logo-badge">◈</div><span class="font-display" style="font-weight:600;font-size:19px">VocaShield</span></div>
+        </div>
+        <button class="btn btn-dark" data-action="enter">Open Dashboard</button>
+      </div>
+    </header>
+
+    <section style="position:relative;overflow:hidden">
+      <div class="hero-backdrop">
+        <div class="hero-blob" style="width:480px;height:480px;background:var(--signal);top:-180px;right:-120px"></div>
+        <div class="hero-blob" style="width:340px;height:340px;background:var(--gold);bottom:-160px;left:-100px;opacity:.18"></div>
+      </div>
+      <div class="wrap" style="padding:60px 22px 68px;position:relative;z-index:1">
+        <div class="hero-grid">
+          <div>
+            <div class="tag" style="background:var(--signal-soft);color:var(--signal-deep);margin-bottom:22px">✦ Voice-Trust Verification Platform</div>
+            <h1 class="font-display" style="font-size:48px;line-height:1.07;font-weight:600;margin:0 0 22px">Don't trust the voice.<br/><span style="color:var(--signal)">Verify the request.</span></h1>
+            <p class="muted" style="font-size:18px;line-height:1.65;max-width:560px;margin:0 0 30px">A perfect voice clone can pass every acoustic test and still be a scam. VocaShield treats impersonation as a trust problem, not just an audio problem — evaluating the voice, the request, the relationship, and the context together, then explaining exactly why.</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-signal" data-action="enter">Analyze an interaction →</button>
+              <a href="#how" class="btn btn-outline">See how it reasons</a>
+            </div>
+          </div>
+          <div class="card" style="position:relative">
+            <div class="eyebrow" style="margin-bottom:20px">The reasoning chain</div>
+            ${chainSteps.map(([label,note],i) => `
+              <div class="chain-step">
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <div class="chain-dot on">${i+1}</div>
+                  ${i < chainSteps.length-1 ? '<div class="chain-line"></div>' : ''}
+                </div>
+                <div style="padding-bottom:20px">
+                  <div class="font-display" style="font-weight:600;font-size:16.5px">${label}</div>
+                  <div class="small muted">${note}</div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff">
+      <div class="wrap" style="padding:54px 22px">
+        <div class="eyebrow">Why this exists</div>
+        <h2 class="font-display" style="font-size:29px;font-weight:600;margin:9px 0 32px;max-width:640px;letter-spacing:-.01em">Voice cloning fraud is scaling faster than most people can react to it.</h2>
+        <div class="grid g4">
+          ${stats.map(([v,l,s]) => `
+            <div class="stat-card card-hover">
+              <div class="font-display" style="font-size:31px;font-weight:600;color:var(--signal);margin-bottom:8px">${v}</div>
+              <div style="font-size:14px;margin-bottom:10px;line-height:1.4">${l}</div>
+              <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">${s}</div>
+            </div>
+          `).join("")}
+        </div>
+        <p class="small muted" style="margin-top:20px">Figures reflect publicly reported industry and research data as of 2025–2026, cited for context.</p>
+      </div>
+    </section>
+
+    <section id="how" class="wrap" style="padding:58px 22px">
+      <div class="two-col">
+        <div>
+          <div class="eyebrow">The gap</div>
+          <h2 class="font-display" style="font-size:27px;font-weight:600;margin:9px 0 18px;letter-spacing:-.01em">Why voice authenticity alone isn't enough</h2>
+          <div class="muted" style="font-size:15px;line-height:1.75">
+            <p>Independent testing shows deepfake-voice detectors that score 90%+ on clean recordings often drop to 60–75% accuracy on real, compressed phone or VoIP calls — the exact conditions a scam actually happens in.</p>
+            <p>Even a well-built detector only answers one question: does this voice sound synthetic? It says nothing about whether the request itself is dangerous, or whether it matches how this relationship normally behaves.</p>
+            <p>VocaShield asks a wider question: <strong style="color:var(--ink)">should belief convert into action here</strong> — combining audio signals with the request, the relationship, and the conversation itself, and showing its reasoning rather than a single opaque score.</p>
+          </div>
+        </div>
+        <div>
+          <div class="eyebrow">Capabilities</div>
+          <h2 class="font-display" style="font-size:27px;font-weight:600;margin:9px 0 18px;letter-spacing:-.01em">What's inside</h2>
+          <div class="grid g2">
+            ${caps.map(([label,t]) => `<div class="card card-hover" style="padding:15px"><div style="font-size:13.5px;font-weight:500;margin-bottom:9px">${label}</div>${tag(t)}</div>`).join("")}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="background:var(--ink);color:#fff">
+      <div class="wrap" style="padding:46px 22px">
+        <div style="display:flex;gap:16px;max-width:680px">
+          <div style="flex-shrink:0;color:var(--signal);font-size:20px">ⓘ</div>
+          <div>
+            <h3 class="font-display" style="font-size:20px;font-weight:600;margin:0 0 12px">How we reason, stated plainly</h3>
+            <p style="font-size:14px;line-height:1.7;opacity:.8;margin:0 0 12px">The Multi-Signal Risk Engine and Voice Vault walk through curated scenarios that mirror real fraud patterns rather than a black-box score; Voice Vaccination is an experimental research concept, not a guaranteed protection. No component makes an automatic accusation — every flow ends with a recommendation for a human to confirm.</p>
+            <p style="font-size:14px;line-height:1.7;opacity:.8;margin:0">Treat every risk read here as a second opinion, not a final verdict.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="wrap" style="padding:36px 22px;display:flex;align-items:center;justify-content:space-between;font-size:12px">
+      <span class="muted">© VocaShield</span>
+      <button class="btn-sm" data-action="enter" style="background:none;border:none;color:var(--signal);font-weight:700">Open Dashboard →</button>
+    </footer>
+  `;
+}
+
+/* ===================== DASHBOARD SHELL ===================== */
+function renderDashboard() {
+  return `
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="hamburger" data-action="openDrawer"><span class="bars"><span></span><span></span><span></span></span></button>
+          <button class="logo" data-action="home"><div class="logo-badge">◈</div><span class="font-display" style="font-weight:600;font-size:16.5px">VocaShield</span></button>
+        </div>
+        <div class="mode-toggle">
+          ${["simple","standard","analyst"].map(m => `<button class="${state.mode===m?'active':''}" data-action="setmode" data-mode="${m}">${m}</button>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="mobilenav">
+      ${NAV_ITEMS.map(n => `<button class="${state.active===n.key?'active':''}" data-action="nav" data-key="${n.key}">${n.glyph} ${n.label}</button>`).join("")}
+    </div>
+    <div class="app-body wrap-app">
+      <nav class="sidenav">
+        ${NAV_ITEMS.map(n => `<button class="${state.active===n.key?'active':''}" data-action="nav" data-key="${n.key}">${n.glyph} ${n.label}</button>`).join("")}
+        <div class="sidenav-note">Tap ☰ anytime to see everything this platform can do.</div>
+      </nav>
+      <main class="main">${renderScreen()}</main>
+    </div>
+  `;
+}
+function screenHeader(eyebrow, title, desc, t) {
+  return `
+    <div style="max-width:720px;margin-bottom:28px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <span class="eyebrow">${eyebrow}</span>${t ? tag(t) : ""}
+      </div>
+      <h1 class="font-display h1">${title}</h1>
+      ${desc ? `<p class="muted" style="font-size:15px;line-height:1.6">${desc}</p>` : ""}
+    </div>`;
+}
+
+function renderScreen() {
+  switch(state.active) {
+    case "overview": return renderOverview();
+    case "analyze": return renderAnalyze();
+    case "verify": return renderVerify();
+    case "trust": return renderTrust();
+    case "vault": return renderVault();
+    case "vaccination": return renderVaccination();
+    case "incidents": return renderIncidents();
+    case "complaint": return renderComplaint();
+    default: return "";
+  }
+}
+
+/* ===================== OVERVIEW (new) ===================== */
+function renderOverview() {
+  const inc = state.incidents;
+  const highCritical = inc.filter(i => i.risk >= 50).length;
+  const rate = inc.length ? Math.round((highCritical/inc.length)*100) : 0;
+  const trend = [22, 31, 28, 45, 39, 52, riskFor(inc[0]?.risk||30).min + (inc[0]?.risk||30)*0 + (inc.length? inc.reduce((s,x)=>s+x.risk,0)/inc.length : 30)];
+  const trendData = [24, 33, 29, 47, 41, 55, Math.round(inc.reduce((s,x)=>s+x.risk,0)/(inc.length||1))];
+
+  const catCounts = {};
+  inc.forEach(i => { catCounts[i.category] = (catCounts[i.category]||0)+1; });
+  const palette = [ "var(--signal)","var(--amber)","var(--rust)","var(--crimson)","#5B7A8C" ];
+  const segments = Object.entries(catCounts).map(([label,val],i) => [label,val,palette[i%palette.length]]);
+
+  return `
+    ${screenHeader("Live status","Overview","A snapshot of your protection activity, computed from what's happened in this session plus historical examples.", "REAL")}
+
+    <div class="grid g4" style="margin-bottom:20px">
+      <div class="stat-card">
+        <div class="stat-num">${inc.length}</div>
+        <div class="stat-label">Total incidents on record</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--rust)">${highCritical}</div>
+        <div class="stat-label">High or Critical risk events</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">${rate}%</div>
+        <div class="stat-label">Share flagged as elevated risk</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">${state.contacts.length}</div>
+        <div class="stat-label">Trust Circle contacts set up</div>
+      </div>
+    </div>
+
+    <div class="overview-grid">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:14px;font-weight:600">Risk trend</div>
+          ${tag("DEMO")}
+        </div>
+        <p class="small muted" style="margin-bottom:14px">Illustrative average risk score across recent activity.</p>
+        ${lineChart(trendData, 560, 140, "#5B3DF5")}
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px">Incident categories</div>
+        <p class="small muted" style="margin-bottom:14px">Breakdown of what's been logged so far.</p>
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+          ${donutChart(segments, 130)}
+          <div style="flex:1;min-width:140px">
+            ${segments.map(([label,val,color]) => `
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px">
+                <span style="width:9px;height:9px;border-radius:3px;background:${color};flex-shrink:0"></span>
+                <span style="flex:1;color:var(--muted)">${esc(label)}</span>
+                <span style="font-weight:700">${val}</span>
+              </div>`).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px">Quick actions</div>
+      <div class="grid g3">
+        <button class="btn btn-dark" style="justify-content:center" data-action="nav" data-key="analyze">Analyze an interaction</button>
+        <button class="btn btn-outline" style="justify-content:center" data-action="nav" data-key="verify">Verify a request</button>
+        <button class="btn btn-outline" style="justify-content:center" data-action="nav" data-key="trust">Manage Trust Circle</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== ANALYZE ===================== */
+function renderAnalyze() {
+  const a = state.analyze;
+  const data = a.scenario ? SCENARIOS[a.scenario] : null;
+  let score = 0;
+  if (data) {
+    const shown = data.steps.slice(0, a.revealed);
+    score = Math.max(2, Math.min(98, data.base + shown.reduce((s,x)=>s+x.weight,0)));
+  }
+  return `
+    ${screenHeader("Multi-signal risk engine","Analyze an interaction","Choose a scenario to see how VocaShield's reasoning model combines voice, request, trust, and history into a single explained risk assessment.","DEMO")}
+    <div class="grid g4" style="margin-bottom:28px">
+      ${Object.entries(SCENARIOS).map(([key,s]) => `
+        <button class="card card-hover" data-action="pickScenario" data-key="${key}" style="text-align:left;border-color:${a.scenario===key?'var(--signal)':'var(--line)'};background:${a.scenario===key?'var(--signal-soft)':'#fff'}">
+          <div style="font-size:12px;font-weight:700;color:var(--signal);margin-bottom:6px">Scenario ${key}</div>
+          <div style="font-size:14px;font-weight:500;line-height:1.4">${s.title.split("— ")[1]}</div>
+        </button>
+      `).join("")}
+    </div>
+    ${!a.scenario ? `<div class="card" style="text-align:center;padding:60px 20px"><div style="font-size:32px;margin-bottom:12px">◎</div><p class="muted">Select a scenario above to run the reasoning chain.</p></div>` : `
+      <div class="analyze-grid">
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:20px">${data.title}</div>
+          ${data.steps.map((s,i) => {
+            const shown = i < a.revealed;
+            const color = s.weight >= 0 ? "var(--rust)" : "var(--signal)";
+            const bg = s.weight >= 0 ? "var(--rust-soft)" : "var(--signal-soft)";
+            return `
+              <div class="chain-step">
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <div class="chain-dot" style="background:${shown?bg:'var(--paper2)'};color:${shown?color:'var(--muted)'}">${shown ? (s.weight>=0?"!":"✓") : "…"}</div>
+                  ${i < data.steps.length-1 ? '<div class="chain-line"></div>' : ''}
+                </div>
+                <div style="padding-bottom:18px;opacity:${shown?1:.3};transition:opacity .4s">
+                  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:3px">${s.label}</div>
+                  <div style="font-size:14px">${s.detail}</div>
+                </div>
+              </div>`;
+          }).join("")}
+        </div>
+        <div>
+          <div class="card" style="text-align:center;padding:30px 20px;margin-bottom:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:12px">Running risk score</div>
+            ${riskBadge(score,'lg')}
+            <div class="bar"><div class="bar-fill" style="width:${score}%;background:${riskFor(score).color}"></div></div>
+          </div>
+          ${a.done ? `<button class="btn btn-dark" style="width:100%;justify-content:center" data-action="goVerify">Continue to Verify the Request →</button>` : ""}
+        </div>
+      </div>
+      ${state.mode==="analyst" && a.done ? `
+        <div class="card" style="margin-top:20px;background:var(--slate);border-color:var(--line-dark)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#93A4B0;margin-bottom:10px">Analyst view — raw signal weights</div>
+          <pre class="font-mono" style="font-size:12px;color:#D7E0E6;overflow-x:auto;white-space:pre-wrap">${esc(JSON.stringify({scenario:a.scenario, base:data.base, steps:data.steps, finalScore:score}, null, 2))}</pre>
+        </div>` : ""}
+    `}
+  `;
+}
+
+/* ===================== VERIFY ===================== */
+function renderVerify() {
+  const v = state.verify;
+  const levelScore = { LOW:10, GUARDED:35, HIGH:60, CRITICAL:88 };
+  const canEval = v.who.trim().length>0 && v.action && v.urgent!==null && v.verifiable!==null;
+  return `
+    ${screenHeader("Decision workflow", '"Verify the request" — not just the voice', "A voice can be perfectly convincing and the request can still be dangerous. Answer honestly about the call — the recommendation is computed from your answers, not guessed.", "REAL")}
+    ${state.lastAssessment && !v.result ? `
+      <div class="card" style="background:var(--amber-soft);border-color:transparent;margin-bottom:22px">
+        <div style="font-size:14px;color:#0D7A70">ⓘ Carried over from Analyze: scenario ${state.lastAssessment.scenario} returned <strong>${state.lastAssessment.level}</strong> risk (${state.lastAssessment.score}/100).</div>
+      </div>` : ""}
+    ${!v.result ? `
+      <div class="card" style="max-width:640px">
+        <div style="margin-bottom:22px">
+          <label class="lbl">Who is claiming to call?</label>
+          <input class="field" id="v-who" placeholder="e.g. My brother, our bank's fraud team, my company's CFO" value="${esc(v.who)}" />
+        </div>
+        <div style="margin-bottom:22px">
+          <label class="lbl">What are they asking for?</label>
+          <div class="grid g2">
+            ${SENSITIVE_ACTIONS.map(a => `<button class="choice-btn ${v.action===a?'sel':''}" data-action="vAction" data-val="${esc(a)}">${a}</button>`).join("")}
+          </div>
+        </div>
+        <div style="margin-bottom:22px">
+          <label class="lbl">Is urgency being applied — pressure to act immediately?</label>
+          <div class="choice-row">${["yes","no"].map(x=>`<button class="choice-btn ${v.urgent===x?'sel':''}" data-action="vUrgent" data-val="${x}">${x}</button>`).join("")}</div>
+        </div>
+        <div style="margin-bottom:24px">
+          <label class="lbl">Can this be independently verified?</label>
+          <div class="choice-row">${["yes","no"].map(x=>`<button class="choice-btn ${v.verifiable===x?'sel':''}" data-action="vVerifiable" data-val="${x}">${x}</button>`).join("")}</div>
+        </div>
+        <button class="btn btn-dark" style="width:100%;justify-content:center" ${canEval?"":"disabled"} data-action="vEvaluate">Get recommendation</button>
+      </div>` : `
+      <div style="max-width:640px">
+        <div class="card" style="margin-bottom:18px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Recommended action</div>
+          <div class="font-display" style="font-size:24px;font-weight:600;margin-bottom:12px">${v.result.rec}</div>
+          <div style="margin-bottom:14px">${riskBadge(levelScore[v.result.level])}</div>
+          <p class="muted" style="font-size:14px;line-height:1.6">${v.result.reason}</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${v.result.rec.includes("Trust Circle") ? `<button class="btn btn-signal" style="flex:1;justify-content:center" data-action="goTrust">Open Trust Circle</button>` : ""}
+          <button class="btn btn-outline" style="flex:1;justify-content:center" data-action="vLogIncident">Log as incident</button>
+          <button class="btn-sm" style="background:none;border:none;color:var(--muted)" data-action="vReset">Start over</button>
+        </div>
+      </div>`}
+  `;
+}
+
+/* ===================== TRUST CIRCLE ===================== */
+function renderTrust() {
+  const tc = state.trustCheck;
+  return `
+    ${screenHeader("Human verification layer","Trust Circle","A shared passphrase that works even if a clone is acoustically perfect — because the attacker never receives it. Real match logic runs below.","REAL")}
+    <div class="two-col">
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Trusted contacts</div>
+        <div style="margin-bottom:18px">
+          ${state.contacts.map(c => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--line);border-radius:11px;margin-bottom:10px">
+              <div><div style="font-size:14px;font-weight:500">${esc(c.name)}</div><div class="small muted">${c.relation} · ${c.channel}</div></div>
+              <div style="display:flex;align-items:center;gap:8px">
+                ${c.hasSecret ? `<span style="font-size:12px;font-weight:600;color:var(--signal)">🔒 Secret set</span>` : `<button class="btn-sm" style="background:var(--signal-soft);border:none;color:var(--signal-deep)" data-action="saveSecret" data-id="${c.id}">Assign passphrase</button>`}
+                <button data-action="removeContact" data-id="${c.id}" style="background:none;border:none;color:var(--muted);padding:4px">✕</button>
+              </div>
+            </div>`).join("")}
+          ${state.contacts.length===0 ? `<p class="muted small">No trusted contacts yet.</p>` : ""}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input class="field" id="tc-name" placeholder="Contact name" style="flex:1;min-width:130px" value="${esc(state.tcName||'')}" />
+          <select class="field" id="tc-relation" style="width:auto">
+            <option>Family</option><option>Organization</option><option>Government contact</option><option>Colleague</option>
+          </select>
+          <button class="btn btn-dark" data-action="addContact">+</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Shared passphrase</div>
+        <p class="small muted" style="line-height:1.6;margin-bottom:16px">Set a phrase known only within your circle. It's masked after creation and never sent to a caller automatically.</p>
+        <div style="position:relative;margin-bottom:16px">
+          <input class="field" id="secret-input" type="${state.showSecret?'text':'password'}" placeholder="e.g. blue umbrella Tuesday" value="${esc(state.secret)}" style="padding-right:40px" />
+          <button data-action="toggleSecret" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted)">${state.showSecret?'🙈':'👁'}</button>
+        </div>
+        <div style="border-top:1px solid var(--line);padding-top:16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Simulate a call-time check</div>
+          <div style="display:flex;gap:8px">
+            <input class="field" id="check-input" placeholder="What the caller says the phrase is" value="${esc(tc.input)}" />
+            <button class="btn btn-signal" data-action="checkPhrase">Check</button>
+          </div>
+          ${tc.result!==null ? `<div style="margin-top:12px;font-size:14px;font-weight:600;color:${tc.result?'var(--signal)':'var(--rust)'}">${tc.result?'✓ Phrase matches — proceed with normal caution.':'✕ Phrase does not match — do not proceed. Verify independently.'}</div>` : ""}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== VOICE VAULT ===================== */
+function renderVault() {
+  const vv = state.vault;
+  return `
+    ${screenHeader("Trusted voice profile","Voice Vault","Register a voice sample to compare future calls against. Matching results below preview how a speaker-verification model would respond.","DEMO")}
+    <div class="two-col">
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Registered profiles</div>
+        <div style="margin-bottom:18px">
+          ${state.voiceProfiles.map(p => `<div style="padding:12px;border:1px solid var(--line);border-radius:11px;margin-bottom:10px"><div style="font-size:14px;font-weight:500">${esc(p.name)}</div><div class="small muted">${p.relation} · added ${p.createdAt}</div></div>`).join("")}
+        </div>
+        <input class="field" id="vv-name" placeholder="Whose voice is this?" style="margin-bottom:8px" value="${esc(vv.name)}" />
+        <select class="field" id="vv-relation" style="margin-bottom:8px"><option>Family</option><option>Organization</option><option>Self</option></select>
+        <label class="field" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;color:${vv.fileName?'var(--ink)':'var(--muted)'}">
+          🎙 ${vv.fileName || "Upload or record a sample"}
+          <input type="file" accept="audio/*" id="vv-file" style="display:none" />
+        </label>
+        <button class="btn btn-dark" style="width:100%;justify-content:center" data-action="addProfile">Save profile</button>
+        <div class="small" style="background:var(--paper2);color:var(--muted);padding:12px;border-radius:11px;margin-top:14px">Privacy status: raw audio retained — <strong>No</strong>. Derived representation retained — <strong>Yes (session only)</strong>.</div>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Simulate a call-time match</div>
+        <p class="small muted" style="line-height:1.6;margin-bottom:20px">This compares a live call sample against your registered profile and returns a confidence read.</p>
+        <button class="btn btn-signal" style="width:100%;justify-content:center" data-action="runMatch" ${vv.checking?"disabled":""}>${vv.checking ? "Comparing sample…" : "Run voice comparison"}</button>
+        ${vv.matchResult ? `
+          <div style="margin-top:20px;padding:16px;border:1px solid var(--line);border-radius:13px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:20px;color:${vv.matchResult.match?'var(--signal)':'var(--rust)'}">${vv.matchResult.match?'✓':'✕'}</span>
+            <div><div style="font-size:14px;font-weight:600;color:${vv.matchResult.match?'var(--signal)':'var(--rust)'}">${vv.matchResult.match?'Likely match':'No confident match'}</div><div class="small muted">Confidence: ${vv.matchResult.confidence}%</div></div>
+          </div>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== VOICE VACCINATION (enhanced) ===================== */
+function waveBars(seed, n, chaos) {
+  let bars = "";
+  for (let i=0;i<n;i++) {
+    const h = 8 + Math.abs(Math.sin(seed + i*0.5)) * 55 * (chaos ? (0.4 + Math.random()*1.3) : 1);
+    bars += `<div class="wave-bar" style="height:${h}px"></div>`;
+  }
+  return bars;
+}
+function renderVaccination() {
+  const stage = state.vacc.stage;
+  return `
+    ${screenHeader("Proactive protection","Voice Vaccination","A research direction: adding an inaudible perturbation to a voice recording before it's posted publicly, intended to disrupt cloning models while sounding normal to a human ear.","EXPERIMENTAL")}
+    <div class="card" style="background:var(--rust-soft);border-color:transparent;max-width:720px;margin-bottom:22px">
+      <div style="display:flex;gap:12px;font-size:14px;color:var(--rust)">
+        <span>⚠</span>
+        <p style="margin:0">Based on published adversarial-audio research. <strong>Not a guaranteed or universal defense</strong> — some protective perturbations can be partially reversed by a determined attacker. This module illustrates the concept only; nothing here is a real audio processing pipeline.</p>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:720px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div style="font-size:14px;font-weight:600">Protection simulation</div>
+        <button class="btn btn-signal btn-sm" data-action="vaccRun">${stage==='idle' ? 'Apply protective layer →' : stage==='vaccinating' ? 'Processing…' : 'Run again'}</button>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="small muted" style="margin-bottom:8px;font-weight:600">Original sample</div>
+          <div class="wave-box">${waveBars(0, 26, false)}</div>
+          <div class="small muted" style="margin-top:8px">Sounds natural. No protection applied.</div>
+        </div>
+        <div>
+          <div class="small muted" style="margin-bottom:8px;font-weight:600">Vaccinated sample</div>
+          <div class="wave-box" style="background:${stage==='done' ? 'linear-gradient(135deg, var(--signal-deep), var(--ink))' : 'var(--ink)'}">
+            ${stage==='done' ? waveBars(0.3, 26, false).replace(/var\(--signal\)/g,'#5EC9A9') : waveBars(0, 26, false)}
+          </div>
+          <div class="small muted" style="margin-top:8px">${stage==='done' ? 'Identical to the human ear — protective noise layer embedded.' : 'Not yet processed.'}</div>
+        </div>
+      </div>
+
+      ${stage==='done' ? `
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--line)">
+          <div class="small muted" style="margin-bottom:8px;font-weight:600">Simulated cloning attempt against the vaccinated sample</div>
+          <div class="wave-box" style="background:var(--crimson-soft)">${waveBars(0, 26, true).replace(/var\(--signal\)/g,'#D2481F')}</div>
+          <div class="small" style="margin-top:8px;color:var(--rust)">Intended outcome: garbled, clearly artificial output — a cloning attempt fails to reproduce the voice convincingly.</div>
+        </div>` : ""}
+    </div>
+
+    <div class="card" style="max-width:720px;margin-top:20px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:8px">Why this matters</div>
+      <p class="muted" style="font-size:14px;line-height:1.6">Every other layer in this platform reacts to an attack already in progress. Voice Vaccination is the only one that acts before a sample is ever misused — reducing how usable a public recording is as raw material for cloning in the first place.</p>
+    </div>
+  `;
+}
+
+/* ===================== SOCIAL ENGINEERING PANEL (inside Incidents) ===================== */
+/* rendered directly within renderIncidents */
+
+/* ===================== INCIDENTS ===================== */
+function renderIncidents() {
+  const filtered = state.incidents.filter(i => state.incFilter==="All" || riskFor(i.risk).key===state.incFilter);
+  const se = scoreTranscript(state.seText);
+  return `
+    ${screenHeader("Record keeping","Incident & threat history","Every assessment you run in this session is logged here automatically, alongside a few seeded historical examples.","REAL")}
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
+      <span class="muted small">Filter:</span>
+      ${["All","LOW","GUARDED","HIGH","CRITICAL"].map(f => `<button class="btn-sm" style="background:${state.incFilter===f?'var(--ink)':'var(--paper2)'};color:${state.incFilter===f?'#fff':'var(--muted)'};border:none" data-action="setFilter" data-val="${f}">${f}</button>`).join("")}
+    </div>
+    ${filtered.map(inc => `
+      <button class="inc-row" data-action="openIncident" data-id="${inc.id}">
+        <div style="min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700">${inc.id}</span>${tag(inc.demo?"DEMO":"REAL")}</div>
+          <div style="font-size:14px;margin-bottom:4px">${esc(inc.category||"")}</div>
+          <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(inc.evidence||"")}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">${riskBadge(inc.risk)}<span class="muted">›</span></div>
+      </button>
+    `).join("")}
+    ${filtered.length===0 ? `<p class="muted small">No incidents at this risk level.</p>` : ""}
+
+    <div class="card" style="margin-top:32px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">Transcript risk scan</div>
+      <p class="small muted" style="margin-bottom:14px">Paste or type what the caller said. Scoring runs live on your text.</p>
+      <textarea class="field" id="se-text" rows="5" placeholder="e.g. This is urgent, do not tell anyone, I need your OTP right now to stop the transfer." style="margin-bottom:14px">${esc(state.seText)}</textarea>
+      ${!se.insufficient ? `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+          ${riskBadge(se.score)}
+          ${se.sequencingFlag ? `<span class="tag" style="background:var(--rust-soft);color:var(--rust)">Escalation pattern detected</span>` : ""}
+        </div>
+        <div class="grid g2">
+          ${Object.entries(se.hits).filter(([,f])=>f.length>0).map(([cat,found]) => `
+            <div style="padding:12px;border-radius:11px;background:var(--paper2)">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px">${cat}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">${found.map(f=>`<span style="font-size:12px;padding:3px 8px;border-radius:999px;background:#fff;border:1px solid var(--line)">"${esc(f)}"</span>`).join("")}</div>
+            </div>`).join("")}
+        </div>` : `<p class="muted small">Insufficient text for a reliable read — add more of the conversation.</p>`}
+    </div>
+  `;
+}
+
+/* ===================== COMPLAINT DRAFT ===================== */
+function renderComplaint() {
+  const inc = state.selectedIncident || state.incidents[0];
+  if (!inc) return `<p class="muted">No incidents available to draft a complaint from yet.</p>`;
+  return `
+    ${screenHeader("Reporting","Auto-drafted complaint","Pre-filled from incident data. Nothing is submitted automatically — review, edit, and export it yourself.","REAL")}
+    <div style="margin-bottom:18px">
+      <select class="field" id="complaint-select" style="width:auto">
+        ${state.incidents.map(i => `<option value="${i.id}" ${i.id===inc.id?'selected':''}>${i.id} — ${esc(i.category||"")}</option>`).join("")}
+      </select>
+    </div>
+    <div class="card" style="max-width:640px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:16px">System-derived fields</div>
+      <div class="grid g2" style="margin-bottom:20px;font-size:14px">
+        <div><div class="muted small">Incident ID</div><div style="font-weight:600">${inc.id}</div></div>
+        <div><div class="muted small">Date</div><div style="font-weight:600">${inc.date}</div></div>
+        <div><div class="muted small">Category</div><div style="font-weight:600">${esc(inc.category||"")}</div></div>
+        <div><div class="muted small">Risk assessed</div>${riskBadge(inc.risk)}</div>
+        <div style="grid-column:1/-1"><div class="muted small">Evidence summary</div><div style="font-weight:600">${esc(inc.evidence||"")}</div></div>
+        <div style="grid-column:1/-1"><div class="muted small">Outcome</div><div style="font-weight:600">${esc(inc.outcome||"")}</div></div>
+      </div>
+      <div style="border-top:1px solid var(--line);padding-top:16px">
+        <label class="lbl" style="font-size:11px;text-transform:uppercase">Your notes (user-entered)</label>
+        <textarea class="field" id="complaint-notes" rows="3" placeholder="Add anything else relevant before exporting…">${esc(state.complaint.notes)}</textarea>
+      </div>
+      <button class="btn btn-dark" style="width:100%;justify-content:center;margin-top:16px" data-action="exportComplaint">Export report</button>
+      ${state.complaint.exported ? `<div class="small" style="margin-top:14px;padding:10px;border-radius:9px;background:var(--signal-soft);color:var(--signal-deep)">✓ Report exported locally. Nothing was submitted to any external authority.</div>` : ""}
+      <p class="small muted" style="margin-top:14px">ⓘ Direct submission to an official portal is coming in a future update.</p>
+    </div>
+  `;
+}
+
+/* ===================== EVENT HANDLING ===================== */
+function attachHandlers() {
+  document.querySelectorAll("[data-action]").forEach(el => { el.addEventListener("click", onAction); });
+  const bind = (id, evt, fn) => { const e = document.getElementById(id); if (e) e.addEventListener(evt, fn); };
+  bind("v-who","input", e => { state.verify.who = e.target.value; });
+  bind("tc-name","input", e => { state.tcName = e.target.value; });
+  bind("secret-input","input", e => { state.secret = e.target.value; });
+  bind("check-input","input", e => { state.trustCheck.input = e.target.value; });
+  bind("vv-name","input", e => { state.vault.name = e.target.value; });
+  bind("vv-file","change", e => { state.vault.fileName = e.target.files[0]?.name; render(); });
+  bind("se-text","input", e => { state.seText = e.target.value; renderPreserveFocus("se-text"); });
+  bind("complaint-notes","input", e => { state.complaint.notes = e.target.value; });
+  bind("complaint-select","change", e => { state.selectedIncident = state.incidents.find(i=>i.id===e.target.value); render(); });
+}
+
+function renderPreserveFocus(id) {
+  const el = document.getElementById(id);
+  const pos = el ? el.selectionStart : null;
+  render();
+  const el2 = document.getElementById(id);
+  if (el2 && pos !== null) { el2.focus(); el2.setSelectionRange(pos,pos); }
+}
+
+function onAction(e) {
+  const el = e.currentTarget;
+  const action = el.dataset.action;
+
+  if (action === "enter") { state.screen = "dashboard"; state.active = "overview"; }
+  if (action === "home") { state.screen = "landing"; }
+  if (action === "setmode") { state.mode = el.dataset.mode; }
+  if (action === "nav") { state.active = el.dataset.key; }
+  if (action === "openDrawer") { state.drawerOpen = true; }
+  if (action === "closeDrawer") { state.drawerOpen = false; }
+  if (action === "drawerEnter") { state.screen = "dashboard"; if (state.active === undefined) state.active = "overview"; state.drawerOpen = false; }
+
+  if (action === "pickScenario") {
+    state.analyze = { scenario: el.dataset.key, revealed: 0, done: false };
+    render();
+    runAnalyzeTimer();
+    return;
+  }
+  if (action === "goVerify") { state.active = "verify"; }
+  if (action === "vAction") { state.verify.action = el.dataset.val; }
+  if (action === "vUrgent") { state.verify.urgent = el.dataset.val; }
+  if (action === "vVerifiable") { state.verify.verifiable = el.dataset.val; }
+  if (action === "vEvaluate") { evaluateVerify(); }
+  if (action === "vReset") { state.verify = { who:"", action:"", urgent:null, verifiable:null, result:null }; }
+  if (action === "vLogIncident") {
+    const v = state.verify;
+    const levelScore = { LOW:10, GUARDED:35, HIGH:60, CRITICAL:88 };
+    logIncident({ risk: levelScore[v.result.level], category: v.result.action, evidence: `Caller claimed to be "${v.who}". Urgency: ${v.urgent}. Independently verifiable: ${v.verifiable}.`, outcome: `System recommended: ${v.result.rec}` });
+  }
+  if (action === "goTrust") { state.active = "trust"; }
+
+  if (action === "addContact") {
+    const name = (state.tcName||"").trim();
+    if (name) {
+      const rel = document.getElementById("tc-relation")?.value || "Family";
+      state.contacts.push({ id: Date.now(), name, relation: rel, channel:"Phone", hasSecret:false });
+      state.tcName = "";
+    }
+  }
+  if (action === "removeContact") { state.contacts = state.contacts.filter(c => c.id != el.dataset.id); }
+  if (action === "saveSecret") { if (state.secret.trim()) state.contacts = state.contacts.map(c => c.id == el.dataset.id ? {...c, hasSecret:true} : c); }
+  if (action === "toggleSecret") { state.showSecret = !state.showSecret; }
+  if (action === "checkPhrase") { state.trustCheck.result = state.trustCheck.input.trim().length>0 && state.trustCheck.input.trim() === state.secret.trim(); }
+
+  if (action === "addProfile") {
+    const name = state.vault.name.trim();
+    if (name) {
+      const rel = document.getElementById("vv-relation")?.value || "Family";
+      state.voiceProfiles.push({ id: Date.now(), name, relation: rel, createdAt:"Just now" });
+      state.vault.name = ""; state.vault.fileName = null;
+    }
+  }
+  if (action === "runMatch") {
+    state.vault.checking = true; state.vault.matchResult = null;
+    render();
+    setTimeout(() => {
+      const outcomes = [{match:true,confidence:88},{match:false,confidence:34}];
+      state.vault.matchResult = outcomes[Math.floor(Math.random()*outcomes.length)];
+      state.vault.checking = false;
+      render();
+    }, 1100);
+    return;
+  }
+
+  if (action === "vaccRun") {
+    state.vacc.stage = "vaccinating";
+    render();
+    setTimeout(() => { state.vacc.stage = "done"; render(); }, 1000);
+    return;
+  }
+
+  if (action === "setFilter") { state.incFilter = el.dataset.val; }
+  if (action === "openIncident") { state.selectedIncident = state.incidents.find(i => i.id === el.dataset.id); state.active = "complaint"; }
+  if (action === "exportComplaint") { state.complaint.exported = true; }
+
+  render();
+}
+
+function evaluateVerify() {
+  const v = state.verify;
+  const sensitive = v.action && v.action !== "None of these";
+  let rec = "Continue", reason = "No sensitive action requested; standard caution applies.", level = "LOW";
+  if (sensitive && v.verifiable==="no" && v.urgent==="yes") { rec="Do not proceed until verified"; reason="A sensitive action was requested under time pressure with no independent way to verify the caller."; level="CRITICAL"; }
+  else if (sensitive && v.verifiable==="no") { rec="Use Trust Circle verification"; reason="A sensitive action was requested and cannot yet be independently confirmed."; level="HIGH"; }
+  else if (sensitive && v.urgent==="yes") { rec="Contact through a known number"; reason="The action is sensitive and urgency is being applied — a classic pressure pattern."; level="GUARDED"; }
+  else if (sensitive) { rec="Verify independently"; reason="The action is sensitive enough to confirm through a separate channel before proceeding."; level="GUARDED"; }
+  v.result = { rec, reason, level };
+}
+
+function logIncident(entry) {
+  const id = "INC-" + Math.floor(1000+Math.random()*9000);
+  state.incidents.unshift({ id, date:"Just now", demo:false, ...entry });
+}
+
+function runAnalyzeTimer() {
+  const a = state.analyze;
+  const total = SCENARIOS[a.scenario].steps.length;
+  if (a.revealed < total) {
+    setTimeout(() => {
+      if (state.analyze.scenario !== a.scenario) return;
+      state.analyze.revealed++;
+      if (state.analyze.revealed >= total) {
+        state.analyze.done = true;
+        const data = SCENARIOS[state.analyze.scenario];
+        const score = Math.max(2, Math.min(98, data.base + data.steps.reduce((s,x)=>s+x.weight,0)));
+        state.lastAssessment = { scenario: state.analyze.scenario, score, level: riskFor(score).key, evidence: data.steps };
+      }
+      render();
+      if (state.active === "analyze") runAnalyzeTimer();
+    }, 500);
+  }
+}
+
+render();
+</script>
+</body>
+</html>
